@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"time"
 
@@ -8,24 +9,26 @@ import (
 )
 
 var (
-	worktime = 25 * time.Minute
-
 	// channels for notifications within the system
 	countdownChan = make(chan string)
 	spinnerChan   = make(chan string)
+
+	timeFlag = flag.Int("time", 25, "Set the duration of the timer")
 )
 
 func main() {
+	flag.Parse()
+	workDuration := time.Duration(*timeFlag) * time.Minute
 
-	end := time.Now().Add(worktime)
+	end := time.Now().Add(workDuration)
 
 	go countdown(end, countdownChan)
 	go spinner(spinnerChan)
 
-	printer()
+	printer(workDuration)
 }
 
-func printer() {
+func printer(workDuration time.Duration) {
 	var strings = [2]string{}
 	for {
 		select {
@@ -38,7 +41,7 @@ func printer() {
 		case countdownString := <-countdownChan:
 			backtrack(len(strings[0]+strings[1]) + 1)
 			if countdownString == "done" {
-				printDone(worktime)
+				printDone(workDuration)
 				notifyUser()
 
 				return
