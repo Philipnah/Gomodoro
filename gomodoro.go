@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"time"
+
+	"github.com/gen2brain/beeep"
 )
 
 var (
-	worktime = 25 * time.Minute
+	worktime = 1 * time.Minute
 
 	// channels for notifications within the system
 	countdownChan = make(chan string)
@@ -37,6 +39,8 @@ func printer() {
 			if countdownString == "done" {
 				backtrack(len(strings[0]+strings[1]) + 1)
 				printDone(worktime)
+				notifyUser()
+
 				return
 			}
 
@@ -49,18 +53,19 @@ func printer() {
 }
 
 func spinner(spinnerChan chan<- string) {
+	delay := 200 * time.Millisecond
 	for {
 		spinnerChan <- "|"
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(delay)
 
 		spinnerChan <- "/"
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(delay)
 
 		spinnerChan <- "-"
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(delay)
 
 		spinnerChan <- "\\"
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(delay)
 	}
 }
 
@@ -82,6 +87,18 @@ func backtrack(length int) {
 }
 
 func printDone(worktime time.Duration) {
-	fmt.Println("You're done! 🎉")
+	fmt.Println("Congratulations! 🎉")
 	fmt.Println("You did", worktime.String(), "of work! 🥳")
+}
+
+func notifyUser() {
+	notifyErr := beeep.Notify("Gomodoro", "Time to relax!", "info.png")
+	if notifyErr != nil {
+		panic(notifyErr)
+	}
+
+	beepErr := beeep.Beep(beeep.DefaultFreq, beeep.DefaultDuration)
+	if beepErr != nil {
+		panic(beepErr)
+	}
 }
