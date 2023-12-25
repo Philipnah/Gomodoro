@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	worktime = 1 * time.Minute
+	worktime = 25 * time.Minute
 
 	// channels for notifications within the system
 	countdownChan = make(chan string)
@@ -36,15 +36,13 @@ func printer() {
 			fmt.Print(strings[0] + " " + strings[1])
 
 		case countdownString := <-countdownChan:
+			backtrack(len(strings[0]+strings[1]) + 1)
 			if countdownString == "done" {
-				backtrack(len(strings[0]+strings[1]) + 1)
 				printDone(worktime)
 				notifyUser()
 
 				return
 			}
-
-			backtrack(len(strings[0]+strings[1]) + 1)
 
 			strings[0] = countdownString
 			fmt.Print(strings[0] + " " + strings[1])
@@ -79,11 +77,19 @@ func countdown(end time.Time, countdownChan chan<- string) {
 }
 
 func backtrack(length int) {
-	var backString string
+	var backChars string
+	var backSpaces string
 	for i := 0; i < length; i++ {
-		backString = backString + "\b"
+		backChars = backChars + "\b"
+		backSpaces = backSpaces + " "
 	}
-	fmt.Print(backString)
+
+	// Go back to beginning of line,
+	// replace all previous chars with spaces to clear them,
+	// then go back to beginning of line to have a clear slate.
+	fmt.Print(backChars)
+	fmt.Print(backSpaces)
+	fmt.Print(backChars)
 }
 
 func printDone(worktime time.Duration) {
