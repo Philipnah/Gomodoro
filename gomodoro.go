@@ -13,22 +13,37 @@ var (
 	countdownChan = make(chan string)
 	spinnerChan   = make(chan string)
 
-	timeFlag = flag.Int("time", 25, "Set the duration of the timer")
+	workFlag = flag.Int("work", 25, "Set the duration of the timer")
+	restFlag = flag.Int("rest", 5, "Set the duration of the timer")
 )
 
 func main() {
 	flag.Parse()
-	workDuration := time.Duration(*timeFlag) * time.Minute
+	workDuration := time.Duration(*workFlag) * time.Minute
+	restDuration := time.Duration(*restFlag) * time.Minute
 
-	end := time.Now().Add(workDuration)
-
-	go countdown(end, countdownChan)
 	go spinner(spinnerChan)
 
-	printer(workDuration)
+	for {
+		go countdown(workDuration, countdownChan)
+
+		fmt.Print("📌 Work:\n\t")
+		printer()
+		printDone(workDuration)
+		notifyUser("Time to relax!")
+
+		fmt.Print("\n")
+
+		go countdown(restDuration, countdownChan)
+
+		fmt.Print("🌟 Rest:\n\t")
+		printer()
+		printDone(restDuration)
+		notifyUser("Time to work!")
+	}
 }
 
-func printer(workDuration time.Duration) {
+func printer() {
 	var strings = [2]string{}
 	for {
 		select {
@@ -41,9 +56,6 @@ func printer(workDuration time.Duration) {
 		case countdownString := <-countdownChan:
 			backtrack(len(strings[0]+strings[1]) + 1)
 			if countdownString == "done" {
-				printDone(workDuration)
-				notifyUser()
-
 				return
 			}
 
@@ -70,7 +82,9 @@ func spinner(spinnerChan chan<- string) {
 	}
 }
 
-func countdown(end time.Time, countdownChan chan<- string) {
+func countdown(duration time.Duration, countdownChan chan<- string) {
+	end := time.Now().Add(duration)
+
 	for time.Until(end).Milliseconds() > 0 {
 		countdownChan <- time.Until(end).Round(time.Second).String()
 		time.Sleep(time.Second)
@@ -100,8 +114,8 @@ func printDone(worktime time.Duration) {
 	fmt.Println("You did", worktime.String(), "of work! 🥳")
 }
 
-func notifyUser() {
-	notifyErr := beeep.Notify("Gomodoro", "Time to relax!", "info.png")
+func notifyUser(message string) {
+	notifyErr := beeep.Notify("Gomodoro", message, "info.png")
 	if notifyErr != nil {
 		panic(notifyErr)
 	}
