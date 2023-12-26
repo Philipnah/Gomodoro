@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gen2brain/beeep"
@@ -13,8 +15,8 @@ var (
 	countdownChan = make(chan string)
 	spinnerChan   = make(chan string)
 
-	workFlag = flag.Int("work", 25, "Set the duration of the timer")
-	restFlag = flag.Int("rest", 5, "Set the duration of the timer")
+	workFlag = flag.Int("work", 25, "Set the duration of the timer (in minutes)")
+	restFlag = flag.Int("rest", 5, "Set the duration of the timer (in minutes)")
 )
 
 func main() {
@@ -23,6 +25,7 @@ func main() {
 	restDuration := time.Duration(*restFlag) * time.Minute
 
 	go spinner(spinnerChan)
+	reader := bufio.NewReader(os.Stdin)
 
 	for {
 		go countdown(workDuration, countdownChan)
@@ -32,7 +35,9 @@ func main() {
 		printDone(workDuration)
 		notifyUser("Time to relax!")
 
-		fmt.Print("\n")
+		reader.Discard(reader.Buffered()) // doesn't seem to discard newlines produced by the 'enter' button
+		fmt.Print("\nPress 'Enter' to rest now...\n")
+		reader.ReadString('\n')
 
 		go countdown(restDuration, countdownChan)
 
@@ -40,6 +45,10 @@ func main() {
 		printer()
 		printDone(restDuration)
 		notifyUser("Time to work!")
+
+		reader.Discard(reader.Buffered())
+		fmt.Print("\nPress 'Enter' to work now...\n")
+		reader.ReadString('\n')
 	}
 }
 
