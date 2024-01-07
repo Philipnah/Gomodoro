@@ -9,30 +9,29 @@ on:
       - "v*.*.*"
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: go build -v ./...
 
-    - name: Zip
-      shell: bash
-      run: | 
-        tag=$(git describe --tags --abbrev=0)
-        release_name="gomodoro-$tag"
-        
-        7z a -tzip "${release_name}.zip" "gomodoro"
-    
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref_name }}
-        files: "gomodoro*.zip"
+      - name: Zip
+        shell: bash
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          release_name="gomodoro-$tag"
+
+          7z a -tzip "${release_name}.zip" "./gomodoro"
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: "gomodoro*.zip"
